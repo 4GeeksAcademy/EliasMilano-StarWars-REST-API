@@ -10,7 +10,7 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-
+from models import User, People, Planet, Favorite
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -52,21 +52,80 @@ def handle_invalid_usage(error):
 
 @app.route('/')
 def sitemap():
-    if ENV == "development":
-        return generate_sitemap(app)
-    return send_from_directory(static_file_dir, 'index.html')
+    return generate_sitemap(app)
 
-# any other endpoint will try to serve it like a static file
-@app.route('/<path:path>', methods=['GET'])
-def serve_any_other_file(path):
-    if not os.path.isfile(os.path.join(static_file_dir, path)):
-        path = 'index.html'
-    response = send_from_directory(static_file_dir, path)
-    response.cache_control.max_age = 0  # avoid cache memory
-    return response
+
+@app.route('/user', methods=['GET'])
+def handle_login():
+    usuarios = User.query.all()
+    if usuarios == []:
+        return jsonify({"msg":"No existen usuarios"}), 404
+    response_body = [item.serialize() for item in usuarios]
+    return jsonify(response_body), 200
+
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user_id(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        return jsonify({"msg":"No existe el usuario"}), 404
+    return jsonify(user.serialize()), 200
+
+
+@app.route('/people', methods=['GET'])
+def get_people():
+    personajes = People.query.all()
+    if personajes == []:
+        return jsonify({"msg":"No existen personajes"}), 404
+    response_body = [item.serialize() for item in personajes]
+    return jsonify(response_body), 200
+
+
+@app.route('/people/<int:people_id>', methods=['GET'])
+def get_people_id(people_id):
+    personaje = People.query.filter_by(id=people_id).first()
+    if personaje is None:
+        return jsonify({"msg":"No existe el personaje"}), 404
+    return jsonify(personaje.serialize()), 200
+
+
+@app.route('/planet', methods=['GET'])
+def get_planets():
+    planetas = Planet.query.all()
+    if planetas == []:
+        return jsonify({"msg":"No existen planetas"}), 404
+    response_body = [item.serialize() for item in planetas]
+    return jsonify(response_body), 200
+
+
+@app.route('/planet/<int:planet_id>', methods=['GET'])
+def get_planet_id(planet_id):
+    planeta = Planet.query.filter_by(id=planet_id).first()
+    if planeta is None:
+        return jsonify({"msg":"No existe el planeta"}), 404
+    return jsonify(planeta.serialize()), 200
+
+
+@app.route('/favorites', methods=['GET'])
+def get_favorite():
+    favoritos = Favorite.query.all()
+    if favoritos == []:
+        return jsonify({"msg":"No existen favoritos"}), 404
+    response_body = [item.serialize() for item in favoritos]
+    return jsonify(response_body), 200
+
+
+@app.route('/favorites/<int:favorite_id>', methods=['GET'])
+def get_favorite_id(favorite_id):
+    favorito = Favorite.query.filter_by(id=favorite_id).first()
+    if favorito is None:
+        return jsonify({"msg":"No existe el favorito"}), 404
+    return jsonify(favorito.serialize()), 200
+
 
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
     app.run(host='0.0.0.0', port=PORT, debug=True)
+
